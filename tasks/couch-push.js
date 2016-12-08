@@ -47,7 +47,7 @@ module.exports = function(grunt) {
     });
   }
   
-  function push(doc, url, auth, done) {
+  function push(doc, url, keepExisiting, auth, done) {
     var keys = {
       keys: doc.docs.map(function(d) { return d._id; })
     };
@@ -65,7 +65,10 @@ module.exports = function(grunt) {
         if (data && data.rows) {
           for (var i = 0; i < data.rows.length; i++) {
             if (data.rows[i].value) {
-              doc.docs[i]._rev = data.rows[i].value.rev;
+							if(keepExisiting)
+								doc.docs.splice(i, 1);
+							else
+								doc.docs[i]._rev = data.rows[i].value.rev;
             }
           }
         }
@@ -104,7 +107,7 @@ module.exports = function(grunt) {
           grunt.log.error("Could not find files: \"" + file.orig.src + "\"");        
         } else {
           async.each(file.src, function(src, nextSrc) {
-            push(grunt.file.readJSON(src), file.dest, auth, nextSrc);
+            push(grunt.file.readJSON(src), file.dest, options.keepExisiting || false, auth, nextSrc);
           }, next);
         }
     }, function(err) {
